@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bnxmtcx7n05io"]
+
+[ext_resource type="PackedScene" uid="uid://dfilo54oq03ye" path="res://scenes/piece.tscn" id="1_hmnag"]
+[ext_resource type="Texture2D" uid="uid://qjwwrw321ne8" path="res://assets/pieces/tile_grey_88x88.png" id="2_1a5hn"]
+
+[node name="tile_grey" unique_id=1557971406 instance=ExtResource("1_hmnag")]
+color = "grey"
+
+[node name="Sprite2D" parent="." index="0" unique_id=587950626]
+texture = ExtResource("2_1a5hn")

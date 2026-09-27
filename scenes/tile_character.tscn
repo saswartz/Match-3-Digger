@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://by1ru4207eyjg"]
+
+[ext_resource type="PackedScene" uid="uid://dfilo54oq03ye" path="res://scenes/piece.tscn" id="1_bmoco"]
+[ext_resource type="Texture2D" uid="uid://bwoyjiq742ln7" path="res://assets/character/tile_0120_border_1.png" id="2_bmoco"]
+
+[node name="tile_character" unique_id=1557971406 instance=ExtResource("1_bmoco")]
+color = "character"
+
+[node name="Sprite2D" parent="." index="0" unique_id=587950626]
+scale = Vector2(2, 2)
+texture = ExtResource("2_bmoco")

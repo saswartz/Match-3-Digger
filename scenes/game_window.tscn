@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://b3te6nb03jysa"]
+
+[ext_resource type="Texture2D" uid="uid://cba0epxttspdb" path="res://assets/ui/halftone-gradient-background-fading-square-pixel-texture-repeated-gradation.jpg" id="1_5snyb"]
+[ext_resource type="Texture2D" uid="uid://b1ql1ald6v45g" path="res://assets/ui/ui_top.png" id="2_xqmpp"]
+[ext_resource type="Texture2D" uid="uid://daj5irlivnxun" path="res://assets/ui/ui_bottom.png" id="3_7wq2k"]
+[ext_resource type="Script" uid="uid://bhbrlgln14365" path="res://scripts/grid.gd" id="4_xqmpp"]
+[ext_resource type="Texture2D" uid="uid://ce481ifdoii0c" path="res://assets/pieces/coin_gold.png" id="5_7wq2k"]
+
+[node name="game_window" type="Node2D" unique_id=1669953414]
+
+[node name="background" type="TextureRect" parent="." unique_id=456689574]
+offset_right = 288.0
+offset_bottom = 640.0
+texture = ExtResource("1_5snyb")
+expand_mode = 1
+
+[node name="ui_top" type="TextureRect" parent="." unique_id=292348390]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 273.0
+offset_bottom = 65.0
+texture = ExtResource("2_xqmpp")
+
+[node name="ui_bottom" type="TextureRect" parent="." unique_id=1339827728]
+offset_left = 16.0
+offset_top = 576.0
+offset_right = 273.0
+offset_bottom = 625.0
+texture = ExtResource("3_7wq2k")
+
+[node name="grid" type="Node2D" parent="." unique_id=1716424007]
+script = ExtResource("4_xqmpp")
+width = 8
+height = 15
+x_start = 32
+y_start = 544
+offset = 32
+treasure_texture = ExtResource("5_7wq2k")
+
+[node name="collapse_timer" type="Timer" parent="." unique_id=384700557]
+wait_time = 0.2
+one_shot = true
+
+[node name="destroy_timer" type="Timer" parent="." unique_id=1736532908]
+wait_time = 0.5
+one_shot = true
+
+[node name="refill_timer" type="Timer" parent="." unique_id=235695916]
+wait_time = 0.5
+one_shot = true
+
+[connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
+[connection signal="timeout" from="destroy_timer" to="grid" method="_on_destroy_timer_timeout"]
+[connection signal="timeout" from="refill_timer" to="grid" method="_on_refill_timer_timeout"]

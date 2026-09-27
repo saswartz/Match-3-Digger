@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://w5jkccb206h1"]
+
+[ext_resource type="PackedScene" uid="uid://dfilo54oq03ye" path="res://scenes/piece.tscn" id="1_282g5"]
+[ext_resource type="Texture2D" uid="uid://dw61ix1rs3fkw" path="res://assets/pieces/tile_blue_88x88.png" id="2_glppp"]
+
+[node name="tile_blue" unique_id=1557971406 instance=ExtResource("1_282g5")]
+color = "blue"
+
+[node name="Sprite2D" parent="." index="0" unique_id=587950626]
+texture = ExtResource("2_glppp")

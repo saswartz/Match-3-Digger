@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://c7jex4jdh6xm5"]
+
+[ext_resource type="PackedScene" uid="uid://dfilo54oq03ye" path="res://scenes/piece.tscn" id="1_0r88i"]
+[ext_resource type="Texture2D" uid="uid://d1a85ueb6j4y0" path="res://assets/pieces/tile_ground_biege_01.png" id="2_0r88i"]
+
+[node name="tile_biege" unique_id=1557971406 instance=ExtResource("1_0r88i")]
+color = "biege"
+
+[node name="Sprite2D" parent="." index="0" unique_id=587950626]
+scale = Vector2(2, 2)
+texture = ExtResource("2_0r88i")
