@@ -30,11 +30,15 @@ texture = ExtResource("3_7wq2k")
 
 [node name="grid" type="Node2D" parent="." unique_id=1716424007]
 script = ExtResource("4_xqmpp")
-width = 8
-height = 15
+visible_width = 8
+visible_height = 15
 x_start = 32
-y_start = 544
+y_start = 96
 offset = 32
+level_width = 8
+level_height = 50
+character_spawn_column = 3
+character_spawn_row = 7
 treasure_texture = ExtResource("5_7wq2k")
 
 [node name="collapse_timer" type="Timer" parent="." unique_id=384700557]
