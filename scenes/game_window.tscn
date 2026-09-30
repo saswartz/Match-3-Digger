@@ -14,20 +14,6 @@ offset_bottom = 640.0
 texture = ExtResource("1_5snyb")
 expand_mode = 1
 
-[node name="ui_top" type="TextureRect" parent="." unique_id=292348390]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 273.0
-offset_bottom = 65.0
-texture = ExtResource("2_xqmpp")
-
-[node name="ui_bottom" type="TextureRect" parent="." unique_id=1339827728]
-offset_left = 16.0
-offset_top = 576.0
-offset_right = 273.0
-offset_bottom = 625.0
-texture = ExtResource("3_7wq2k")
-
 [node name="grid" type="Node2D" parent="." unique_id=1716424007]
 script = ExtResource("4_xqmpp")
 visible_width = 8
@@ -53,6 +39,72 @@ one_shot = true
 wait_time = 0.5
 one_shot = true
 
+[node name="HUD" type="Control" parent="." unique_id=1500995827]
+z_index = 2
+layout_mode = 3
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 273.0
+offset_bottom = 65.0
+mouse_filter = 1
+
+[node name="ui_top" type="TextureRect" parent="HUD" unique_id=292348390]
+top_level = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 273.0
+offset_bottom = 65.0
+texture = ExtResource("2_xqmpp")
+
+[node name="ui_bottom" type="TextureRect" parent="HUD" unique_id=1339827728]
+top_level = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 576.0
+offset_right = 273.0
+offset_bottom = 625.0
+texture = ExtResource("3_7wq2k")
+
+[node name="StaminaBar" type="HBoxContainer" parent="HUD" unique_id=714080250]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 1
+
+[node name="stamina bar 1" type="ColorRect" parent="HUD/StaminaBar" unique_id=1273866017]
+z_index = 2
+layout_mode = 2
+size_flags_horizontal = 3
+color = Color(0.93849427, 0.46508658, 0.5718347, 1)
+
+[node name="stamina bar 2" type="ColorRect" parent="HUD/StaminaBar" unique_id=1164266116]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="stamina bar 3" type="ColorRect" parent="HUD/StaminaBar" unique_id=578670848]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WinScreen" type="VBoxContainer" parent="HUD" unique_id=1796171638]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_top = 560.0
+offset_right = 257.0
+offset_bottom = 609.0
+
+[node name="Label" type="Label" parent="HUD/WinScreen" unique_id=826468705]
+layout_mode = 2
+text = "You Win!"
+
+[node name="Button" type="Button" parent="HUD/WinScreen" unique_id=1575293662]
+layout_mode = 2
+text = "Restart"
+
 [connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
 [connection signal="timeout" from="destroy_timer" to="grid" method="_on_destroy_timer_timeout"]
 [connection signal="timeout" from="refill_timer" to="grid" method="_on_refill_timer_timeout"]
+[connection signal="pressed" from="HUD/WinScreen/Button" to="grid" method="_on_button_pressed"]

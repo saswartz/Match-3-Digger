@@ -22,7 +22,6 @@ var character_current_depth: int #tracks the row in the array character is
 
 @export var treasure_texture: Texture2D
 
-# The piece array wherein pieces are pulled to randomly generate grid
 var possible_pieces: Array[PackedScene] = [
 # preload("res://scenes/tile_red.tscn"),
 # preload("res://scenes/tile_orange.tscn"),
@@ -38,7 +37,7 @@ preload("res://scenes/tile_ground_purple.tscn")
 
 var character_piece: PackedScene = preload("res://scenes/tile_character.tscn");
 
-# The current pieces in the scene
+# The current pieces in the game window scene
 var all_pieces: Array = [];
 
 # Touch variables
@@ -46,13 +45,13 @@ var first_touch: Vector2 = Vector2(0, 0);
 var final_touch: Vector2 = Vector2(0, 0);
 var controlling: bool = false;
 
-# Called when the node enters the scene tree for the first time.
+@onready var win_screen: Control = %WinScreen
+
 func _ready() -> void:
 	all_pieces = make_2d_array(level_width, level_height);
 	spawn_pieces()
 	depth_visibility = 0
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 @warning_ignore("unused_parameter")
 func _process(delta: float) -> void:
 	touch_input();
@@ -121,17 +120,38 @@ func get_piece_grid_position(piece: Node2D) -> Vector2i:
 				return Vector2i(i, j)
 	return Vector2i(-1, -1)
 
+func get_character_grid() -> Vector2i:
+	for i: int in level_width:
+		for j: int in level_height:
+			var piece = all_pieces[i][j]
+			
+			if piece != null:
+				if piece.color == "character":
+					return Vector2i(i, j)
+	
+	return Vector2i(-1, -1)
+
 func is_in_visible_grid(column: int, row: int) -> bool:
-	return column >= 0 and column < visible_width and row >= 0 and row < visible_height
+	if not is_in_level_grid(column, row):
+		return false
+	return column >= 0 and column < visible_width and row >= 0 + character_vertical_travel and row < visible_height + character_vertical_travel
 
 func is_in_level_grid(column: int, row: int) -> bool:
-	return column >= 0 and column < level_width and row >-0 and row < level_height
+	if column < 0 or column >= all_pieces.size():
+		return false
+	if row < 0 or row >= all_pieces[column].size():
+		return false
+	return true
 
 func touch_input() -> void:
+	if win_screen.visible:
+		return
+	
 	if Input.is_action_just_pressed("ui_touch"):
 		first_touch = get_global_mouse_position()
 		var touch_grid_position: Vector2i = pixel_to_grid(first_touch.x, first_touch.y)
-		print("touch grid position ", touch_grid_position)
+		print("---")
+		print("touch grid ", touch_grid_position)
 		print("character current depth ", character_current_depth)
 		controlling = is_in_visible_grid(touch_grid_position.x, touch_grid_position.y);
 
@@ -200,112 +220,67 @@ func swap_pieces(column: int, row: int, direction: Vector2i) -> void:
 		other_piece.move(grid_to_pixel(column, row)) #move() is in piece.gd on piece.tcsn
 	
 	find_matches()
-
-func character_adjacent(i: int, j: int) -> bool:
-	var directions: Array = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)];
-	for each in directions:
-		var ni = i + each.x;
-		var nj = j + each.y;
-		if ni >= 0 and ni < all_pieces.size() and nj >= 0 and nj < all_pieces[ni].size():
-			var piece = all_pieces[ni][nj];
-			if piece != null and piece.color == "character":
-				return true
-	return false
+	check_win()
 
 func find_matches() -> void:
-	var match_grid: Array = []
-	for i in visible_width:
-		match_grid.append([])
-		for j in visible_height:
-			match_grid[i].append(false)
+	var character_grid = get_character_grid()
+	if character_grid == null:
+		return
 	
-	for j in visible_height:
-		for i in range(visible_width - 2):
-			if all_pieces[i][j] and all_pieces[i + 1][j] and all_pieces[i + 2][j]:
-				var color_match = all_pieces[i][j].color
-				if all_pieces[i + 1][j].color == color_match and all_pieces[i + 2][j].color == color_match and color_match != "character":
-					match_grid[i][j] = true
-					match_grid[i + 1][j] = true
-					match_grid[i + 2][j] = true
-	
-	for i in visible_width:
-		for j in range(visible_height - 2):
-			if all_pieces[i][j] and all_pieces[i][j + 1] and all_pieces[i][j + 2]:
-				var color_match = all_pieces[i][j].color
-				if all_pieces[i][j + 1].color == color_match and all_pieces[i][j + 2].color == color_match and color_match != "character":
-					match_grid[i][j] = true
-					match_grid[i][j + 1] = true
-					match_grid[i][j + 2] = true
-	
-	var visited_piece: Array = []
-	for i in visible_width:
-		visited_piece.append([])
-		for j in visible_height:
-			visited_piece[i].append(false)
-	
+	var directions: Array = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
 	var pieces_to_destroy: Array = []
 	
-	for i in visible_width:
-		for j in visible_height:
-			if match_grid[i][j] and not visited_piece[i][j]:
-				var cluster = get_cluster_nodes(i, j, match_grid, visited_piece)
-				
-				var cluster_character_adjacent: bool = false
-				for coord in cluster:
-					if character_adjacent(coord.x, coord.y):
-						cluster_character_adjacent = true
-						break
-				
-				if cluster_character_adjacent:
-					pieces_to_destroy.append_array(cluster)
+	for direction in directions:
+		var ni = character_grid.x + direction.x
+		var nj = character_grid.y + direction.y
+		
+		if is_in_visible_grid(ni, nj) and all_pieces[ni][nj]:
+			var matched_pieces = get_matched_pieces(ni, nj)
+			for piece in matched_pieces:
+				if piece not in pieces_to_destroy:
+					pieces_to_destroy.append(piece)
 	
 	if pieces_to_destroy.size() > 0:
-		for coord in pieces_to_destroy:
-			var doomed_piece = all_pieces[coord.x][coord.y]
+		for piece in pieces_to_destroy:
+			var doomed_piece = all_pieces[piece.x][piece.y]
 			if doomed_piece:
 				doomed_piece.dim()
 				doomed_piece.queue_free()
-				all_pieces[coord.x][coord.y] = null
+				all_pieces[piece.x][piece.y] = null
 				
 		if get_parent().has_node("collapse_timer"):
 			get_parent().get_node("collapse_timer").start()
 
-func apply_treasure_chance(piece: Node2D, chance: float) -> void:
-	var random_rotation_multiplier: int = randi() % 4
-	piece.rotation_degrees = random_rotation_multiplier * 90
+func get_matched_pieces(i: int, j: int) -> Array:
+	var matching_color = all_pieces[i][j].color
+	if matching_color == "character":
+		return []
 	
-	if randf() < chance:
-		piece.treasured = true
-		
-		var treasure_sprite: Sprite2D = Sprite2D.new()
-		treasure_sprite.texture = treasure_texture
-		treasure_sprite.scale = Vector2(0.5, 0.5)
-		
-		treasure_sprite.rotation_degrees = -piece.rotation_degrees
-		
-		piece.add_child(treasure_sprite)
-
-func get_cluster_nodes(i: int, j: int, match_grid: Array, visited_piece: Array) -> Array:
-	var cluster: Array = []
-	var queue: Array = [Vector2i(i, j)]
-	visited_piece[i][j] = true
+	var grids_to_return: Array = []
 	
-	var directions = [Vector2i(-1, 0),  Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
+	for adjacents in range(-2, 1):
+		if is_in_visible_grid(i + adjacents, j ) and is_in_visible_grid(i + adjacents +2, j):
+			var piece1 = all_pieces[i + adjacents][j]
+			var piece2 = all_pieces[i + adjacents + 1][j]
+			var piece3 = all_pieces[i + adjacents + 2][j]
+			if piece1 and piece2 and piece3:
+				if piece1.color == matching_color and piece2.color == matching_color and piece3.color == matching_color:
+					grids_to_return.append(Vector2i(i + adjacents, j))
+					grids_to_return.append(Vector2i(i + adjacents + 1, j))
+					grids_to_return.append(Vector2i(i + adjacents + 2, j))
 	
-	while queue.size() > 0:
-		var current_piece = queue.pop_front()
-		cluster.append(current_piece)
-		
-		for direction in directions:
-			var ni = current_piece.x + direction.x
-			var nj = current_piece.y + direction.y
-			
-			if is_in_visible_grid(ni, nj):
-				if match_grid[ni][nj] and not visited_piece[ni][nj]:
-					visited_piece[ni][nj] = true
-					queue.append(Vector2i(ni, nj))
-					
-	return cluster
+	for adjacents in range(-2, 1):
+		if is_in_visible_grid(i, j + adjacents) and is_in_visible_grid(i, j + adjacents + 2):
+			var piece1 = all_pieces[i][j + adjacents]
+			var piece2 = all_pieces[i][j + adjacents + 1]
+			var piece3 = all_pieces[i][j + adjacents + 2]
+			if piece1 and piece2 and piece3:
+				if piece1.color == matching_color and piece2.color == matching_color and piece3.color == matching_color:
+					grids_to_return.append(Vector2i(i, j + adjacents))
+					grids_to_return.append(Vector2i(i, j + adjacents + 1))
+					grids_to_return.append(Vector2i(i, j + adjacents + 2))
+	
+	return grids_to_return
 
 func collapse_and_refill_columns() -> void:
 	var moving_pieces: Array = []
@@ -332,8 +307,6 @@ func collapse_and_refill_columns() -> void:
 					character_vertical_travel += empty_spots
 					print("Character fell ", empty_spots, " rows during collapse. New depth is ", character_current_depth)
 				
-				# var target_position: Vector2 = grid_to_pixel(i, nj)
-				# piece.move(target_position)
 				moving_pieces.append(piece)
 				
 		for k: int in range(empty_spots):
@@ -342,15 +315,10 @@ func collapse_and_refill_columns() -> void:
 			var random_scene: PackedScene = possible_pieces.pick_random()
 			var new_piece: Node2D = random_scene.instantiate()
 			
-			# var target_position: Vector2 = grid_to_pixel(i, nj)
-			# var start_y_offset: float = (empty_spots - k) * offset
-			# new_piece.position = Vector2(target_position.x, target_position.y - start_y_offset)
-			
 			apply_treasure_chance(new_piece, 0.25)
 			add_child(new_piece)
 			all_pieces[i][nj] = new_piece
 			
-			# new_piece.move(target_position)
 			moving_pieces.append(new_piece)
 	
 	if character_fell:
@@ -370,7 +338,38 @@ func collapse_and_refill_columns() -> void:
 	if moving_pieces.size() > 0:
 		await get_tree().create_timer(0.35).timeout
 		find_matches()
+	
+	check_win()
 
+func apply_treasure_chance(piece: Node2D, chance: float) -> void:
+	var random_rotation_multiplier: int = randi() % 4
+	piece.rotation_degrees = random_rotation_multiplier * 90
+	
+	if randf() < chance:
+		piece.treasured = true
+		
+		var treasure_sprite: Sprite2D = Sprite2D.new()
+		treasure_sprite.texture = treasure_texture
+		treasure_sprite.scale = Vector2(0.5, 0.5)
+		
+		treasure_sprite.rotation_degrees = -piece.rotation_degrees
+		
+		piece.add_child(treasure_sprite)
+
+func check_win() -> void:
+	var character_grid = get_character_grid()
+	if character_grid == null:
+		return
+	
+	var bottom_row_index = all_pieces[character_grid.x].size() - 1
+	
+	if character_grid.y == bottom_row_index:
+		trigger_victory()
+
+func trigger_victory() -> void:
+	print("Player wins")
+	win_screen.visible = true
+	
 #func _on_destroy_timer_timeout() -> void:
 #	destroy_matched();
 
@@ -381,3 +380,7 @@ func _on_collapse_timer_timeout() -> void:
 func _on_refill_timer_timeout() -> void:
 	# refill_columns()
 	collapse_and_refill_columns()
+
+func _on_button_pressed() -> void:
+	print("reset button was clicked")
+	get_tree().reload_current_scene()
