@@ -10,11 +10,16 @@ extends Node2D
 @export var level_width: int
 @export var level_height: int
 
+var cave_stability_maximum: int = 3
+var cave_stability_current: int = 3
+
 @export var character_spawn_column: int
 @export var character_spawn_row: int
 var character_vertical_travel: int = 0
-var character_current_depth: int #tracks the row in the array character is
-@export var depth_visibility: int #tracks rows player can see
+var character_current_depth: int #tracks the row in the all_pieces array the character is
+@export var depth_visibility: int #tracks rows player can interact with
+var character_stamina_maximum: int = 3
+var character_stamina_current: int = 3
 
 @export var destroy_timer: Timer
 @export var collapse_timer: Timer
@@ -45,11 +50,22 @@ var first_touch: Vector2 = Vector2(0, 0);
 var final_touch: Vector2 = Vector2(0, 0);
 var controlling: bool = false;
 
-@onready var win_screen: Control = %WinScreen
+# HUD
+@onready var end_screen: Control = %EndScreen
+@onready var end_label: Control = %EndLabel
+@onready var stamina_rectangles: Array = [
+	%StaminaBar1,
+	%StaminaBar2,
+	%StaminaBar3]
+@onready var stability_rectangles: Array = [
+	%StabilityBar3,
+	%StabilityBar2,
+	%StabilityBar1]
 
 func _ready() -> void:
 	all_pieces = make_2d_array(level_width, level_height);
 	spawn_pieces()
+	update_resource_hud()
 	depth_visibility = 0
 
 @warning_ignore("unused_parameter")
@@ -144,7 +160,7 @@ func is_in_level_grid(column: int, row: int) -> bool:
 	return true
 
 func touch_input() -> void:
-	if win_screen.visible:
+	if end_screen.visible:
 		return
 	
 	if Input.is_action_just_pressed("ui_touch"):
@@ -194,6 +210,7 @@ func swap_pieces(column: int, row: int, direction: Vector2i) -> void:
 	all_pieces[target_column][target_row] = controlled_piece
 	
 	var is_character_moving: bool = (controlled_piece.color == "character" or other_piece.color == "character")
+	
 	if controlled_piece.color == "character":
 		character_current_depth += direction.y
 		character_vertical_travel += direction.y
@@ -203,6 +220,13 @@ func swap_pieces(column: int, row: int, direction: Vector2i) -> void:
 	print("direction ", direction.y)
 	print("character current depth ", character_current_depth)
 	print("character vertical travel ", character_vertical_travel)
+	
+	if is_character_moving:
+		character_stamina_current -= 1
+		update_resource_hud()
+	else:
+		cave_stability_current -= 1
+		update_resource_hud()
 	
 	if is_character_moving and direction.y != 0:
 		
@@ -221,6 +245,7 @@ func swap_pieces(column: int, row: int, direction: Vector2i) -> void:
 	
 	find_matches()
 	check_win()
+	check_lose()
 
 func find_matches() -> void:
 	var character_grid = get_character_grid()
@@ -247,6 +272,10 @@ func find_matches() -> void:
 				doomed_piece.dim()
 				doomed_piece.queue_free()
 				all_pieces[piece.x][piece.y] = null
+		
+		character_stamina_current = clampi(character_stamina_current + 1, 0, character_stamina_maximum)
+		cave_stability_current = clampi(cave_stability_current + 1, 0, cave_stability_maximum)
+		update_resource_hud()
 				
 		if get_parent().has_node("collapse_timer"):
 			get_parent().get_node("collapse_timer").start()
@@ -356,6 +385,17 @@ func apply_treasure_chance(piece: Node2D, chance: float) -> void:
 		
 		piece.add_child(treasure_sprite)
 
+func update_resource_hud() -> void:
+	for i in range(3):
+		if character_stamina_current > i:
+			stamina_rectangles[i].color = Color.GREEN
+		else:
+			stamina_rectangles[i].color = Color.WEB_GRAY
+		if cave_stability_current > i:
+			stability_rectangles[i].color = Color.CYAN
+		else:
+			stability_rectangles[i].color = Color.WEB_GRAY
+
 func check_win() -> void:
 	var character_grid = get_character_grid()
 	if character_grid == null:
@@ -366,10 +406,18 @@ func check_win() -> void:
 	if character_grid.y == bottom_row_index:
 		trigger_victory()
 
+func check_lose() -> void:
+	if character_stamina_current <= 0 and cave_stability_current <= 0:
+		trigger_defeat()
+
 func trigger_victory() -> void:
-	print("Player wins")
-	win_screen.visible = true
-	
+	end_label.text = "WIN"
+	end_screen.visible = true
+
+func trigger_defeat() -> void:
+	end_label.text = "LOSE"
+	end_screen.visible = true
+
 #func _on_destroy_timer_timeout() -> void:
 #	destroy_matched();
 
