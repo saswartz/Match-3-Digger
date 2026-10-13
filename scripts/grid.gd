@@ -21,6 +21,8 @@ var character_current_depth: int #tracks the row in the all_pieces array the cha
 var character_stamina_maximum: int = 3
 var character_stamina_current: int = 3
 
+var treasure_collected: int = 0
+
 @export var destroy_timer: Timer
 @export var collapse_timer: Timer
 @export var refill_timer: Timer
@@ -51,8 +53,10 @@ var final_touch: Vector2 = Vector2(0, 0);
 var controlling: bool = false;
 
 # HUD
+
 @onready var end_screen: Control = %EndScreen
 @onready var end_label: Control = %EndLabel
+@onready var score_label: Control = %ScoreLabel
 @onready var stamina_rectangles: Array = [
 	%StaminaBar1,
 	%StaminaBar2,
@@ -61,6 +65,7 @@ var controlling: bool = false;
 	%StabilityBar3,
 	%StabilityBar2,
 	%StabilityBar1]
+@onready var depth_bar_tracker: Sprite2D = %DepthBarTracker
 
 func _ready() -> void:
 	all_pieces = make_2d_array(level_width, level_height);
@@ -135,6 +140,18 @@ func get_piece_grid_position(piece: Node2D) -> Vector2i:
 			if all_pieces[i][j] == piece:
 				return Vector2i(i, j)
 	return Vector2i(-1, -1)
+
+func get_piece_at(column: int, row: int) -> Node2D:
+	if not is_in_level_grid(column, row):
+		null
+	return all_pieces[column][row]
+
+func is_space_available(column: int, row: int, width: int, height: int) -> bool:
+	for i in range(width):
+		for j in range(height):
+			if not is_in_level_grid(column + i, row + j) or all_pieces[column + i][row + j] != null:
+				return false
+	return true
 
 func get_character_grid() -> Vector2i:
 	for i: int in level_width:
@@ -243,6 +260,7 @@ func swap_pieces(column: int, row: int, direction: Vector2i) -> void:
 		controlled_piece.move(grid_to_pixel(target_column, target_row)) #move() is in piece.gd on peice.tcsn
 		other_piece.move(grid_to_pixel(column, row)) #move() is in piece.gd on piece.tcsn
 	
+	update_depth_bar_tracker(depth_bar_tracker)
 	find_matches()
 	check_win()
 	check_lose()
@@ -269,6 +287,11 @@ func find_matches() -> void:
 		for piece in pieces_to_destroy:
 			var doomed_piece = all_pieces[piece.x][piece.y]
 			if doomed_piece:
+				
+				if doomed_piece.treasured:
+					treasure_collected += 1
+					update_score()
+				
 				doomed_piece.dim()
 				doomed_piece.queue_free()
 				all_pieces[piece.x][piece.y] = null
@@ -368,7 +391,9 @@ func collapse_and_refill_columns() -> void:
 		await get_tree().create_timer(0.35).timeout
 		find_matches()
 	
+	update_depth_bar_tracker(depth_bar_tracker)
 	check_win()
+	check_lose()
 
 func apply_treasure_chance(piece: Node2D, chance: float) -> void:
 	var random_rotation_multiplier: int = randi() % 4
@@ -395,6 +420,24 @@ func update_resource_hud() -> void:
 			stability_rectangles[i].color = Color.CYAN
 		else:
 			stability_rectangles[i].color = Color.WEB_GRAY
+
+func update_score() -> void:
+	score_label.text = str(treasure_collected)
+	pass
+
+func update_depth_bar_tracker(tracker: Sprite2D) -> void:
+	if level_height <=1:
+		return
+	
+	var tracker_bar_top: float = 55.0
+	var tracker_bar_bottom: float = 150.0
+	
+	var depth_percent: float = float(character_current_depth) / float(level_height - 1)
+	var target_y: float = lerp(tracker_bar_top, tracker_bar_bottom, depth_percent)
+	
+	var tween: Tween = create_tween().set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(tracker, "position:y", target_y, 0.3)
+	await tween.finished
 
 func check_win() -> void:
 	var character_grid = get_character_grid()

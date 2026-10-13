@@ -6,6 +6,17 @@
 [ext_resource type="Script" uid="uid://bhbrlgln14365" path="res://scripts/grid.gd" id="4_xqmpp"]
 [ext_resource type="Texture2D" uid="uid://ce481ifdoii0c" path="res://assets/pieces/coin_gold.png" id="5_7wq2k"]
 
+[sub_resource type="Gradient" id="Gradient_7wq2k"]
+offsets = PackedFloat32Array(0, 0.408, 0.588)
+colors = PackedColorArray(1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_8x2t2"]
+gradient = SubResource("Gradient_7wq2k")
+width = 14
+height = 14
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
 [node name="game_window" type="Node2D" unique_id=1669953414]
 
 [node name="background" type="TextureRect" parent="." unique_id=456689574]
@@ -66,6 +77,26 @@ offset_top = 576.0
 offset_right = 273.0
 offset_bottom = 625.0
 texture = ExtResource("3_7wq2k")
+
+[node name="ScoreLabel" type="Label" parent="HUD" unique_id=1000046990]
+unique_name_in_owner = true
+z_index = 108
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.21400002
+anchor_right = 0.78200006
+anchor_bottom = 1.0
+offset_left = 0.0019950867
+offset_right = 0.025985718
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="coin_background" type="Sprite2D" parent="HUD/ScoreLabel" unique_id=42902569]
+z_index = -1
+position = Vector2(73, 25)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("5_7wq2k")
 
 [node name="StaminaContainer" type="HBoxContainer" parent="HUD" unique_id=714080250]
 layout_mode = 1
@@ -141,6 +172,25 @@ text = "You Win!"
 [node name="Button" type="Button" parent="HUD/EndScreen" unique_id=1575293662]
 layout_mode = 2
 text = "Restart"
+
+[node name="DepthBar" type="TextureRect" parent="HUD" unique_id=1937918284]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -0.051000003
+anchor_top = 1.3060001
+anchor_right = -0.012
+anchor_bottom = 11.143001
+offset_left = 0.10700035
+offset_top = 0.0059890747
+offset_right = 0.08400011
+offset_bottom = -0.007019043
+texture = ExtResource("2_xqmpp")
+expand_mode = 1
+
+[node name="DepthBarTracker" type="Sprite2D" parent="HUD" unique_id=447448696]
+unique_name_in_owner = true
+position = Vector2(-8, 70)
+texture = SubResource("GradientTexture2D_8x2t2")
 
 [connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
 [connection signal="timeout" from="destroy_timer" to="grid" method="_on_destroy_timer_timeout"]

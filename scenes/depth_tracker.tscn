@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://baiivlharxoim"]
+
+[ext_resource type="Script" uid="uid://c8e2n1g5piof6" path="res://scripts/piece.gd" id="1_61did"]
+[ext_resource type="Texture2D" uid="uid://bwoyjiq742ln7" path="res://assets/character/tile_0120_border_1.png" id="2_pewfc"]
+
+[node name="piece" type="Node2D" unique_id=1557971406]
+script = ExtResource("1_61did")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=587950626]
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("2_pewfc")
